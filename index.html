@@ -432,6 +432,10 @@ body {
         <div class="settings-label">自动同步<div class="settings-desc">本地变更后 1 分钟自动上传到云端</div></div>
         <label class="switch"><input type="checkbox" id="autoSyncSwitch"><span class="switch-slider"></span></label>
       </div>
+      <div class="settings-row">
+        <div class="settings-label">启动时自动拉取<div class="settings-desc">打开页面时检查云端更新，有更新则提示拉取</div></div>
+        <label class="switch"><input type="checkbox" id="autoPullSwitch"><span class="switch-slider"></span></label>
+      </div>
       <div class="btn-group" style="margin-top:12px;">
         <button class="btn btn-primary btn-sm" id="uploadBtn">☁️ 上传到云端</button>
         <button class="btn btn-ghost btn-sm" id="downloadBtn">⬇️ 从云端拉取</button>
@@ -467,7 +471,7 @@ const STORAGE_KEYS = {
   tasks:'wb_tasks', notes:'wb_notes', links:'wb_links', learns:'wb_learns',
   daily:'wb_daily', userName:'wb_userName', brandName:'wb_brandName', city:'wb_city',
   coords:'wb_coords', theme:'wb_theme', autoTheme:'wb_autoTheme', autoWeather:'wb_autoWeather',
-  gistId:'wb_gistId', gistToken:'wb_gistToken', autoSync:'wb_autoSync'
+  gistId:'wb_gistId', gistToken:'wb_gistToken', autoSync:'wb_autoSync', autoPull:'wb_autoPull', lastSyncAt:'wb_lastSyncAt'
 };
 const store = {
   get(key, fallback){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch{ return fallback; } },
@@ -476,7 +480,7 @@ const store = {
 let state = {
   tasks:[], notes:[], links:[], learns:[], daily:{}, userName:'朋友', brandName:'个人工作台',
   city:'', coords:null, theme:'light', autoTheme:false, autoWeather:true,
-  gistId:'', gistToken:'', autoSync:false, todoFilter:'all', todoPriorityFilter:null,
+  gistId:'', gistToken:'', autoSync:false, autoPull:false, lastSyncAt:null, todoFilter:'all', todoPriorityFilter:null,
   todoTagFilter:null, noteColor:'yellow', noteSearch:'', isLocating:false
 };
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
@@ -783,7 +787,7 @@ function saveState(){
   store.set(STORAGE_KEYS.links,state.links); store.set(STORAGE_KEYS.learns,state.learns);
   store.set(STORAGE_KEYS.daily,state.daily); store.set(STORAGE_KEYS.userName,state.userName);
   store.set(STORAGE_KEYS.brandName,state.brandName); store.set(STORAGE_KEYS.city,state.city);
-  store.set(STORAGE_KEYS.coords,state.coords); triggerAutoSync();
+  store.set(STORAGE_KEYS.coords,state.coords); store.set(STORAGE_KEYS.lastSyncAt,state.lastSyncAt); triggerAutoSync();
 }
 function saveAndRender(){ saveState(); renderAll(); }
 function renderAll(){ renderTodos(); renderTagFilters(); renderNotes(); renderLearns(); renderLinks(); renderDashboard(); }
@@ -836,6 +840,8 @@ async function uploadToGist(silent=false){
     const res=await fetch(`https://api.github.com/gists/${state.gistId}`,{method:'PATCH',headers:{'Authorization':`token ${state.gistToken}`,'Content-Type':'application/json'},body:JSON.stringify({files:{'workbench-data.json':{content:JSON.stringify(data,null,2)}}})});
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     updateSyncStatus('active','已同步 '+new Date().toLocaleTimeString());
+    state.lastSyncAt=new Date().toISOString();
+    store.set(STORAGE_KEYS.lastSyncAt,state.lastSyncAt);
     if(!silent) showToast('已上传到云端','success');
   }catch(err){ updateSyncStatus('error','同步失败'); if(!silent) showToast('上传失败：'+err.message,'error'); }
 }
@@ -858,8 +864,38 @@ async function downloadFromGist(){
     document.getElementById('brandInput').value=state.brandName;
     updateCityDisplay(state.city,false); saveAndRender(); loadWeather();
     updateSyncStatus('active','已拉取 '+new Date().toLocaleTimeString());
+    state.lastSyncAt=new Date().toISOString();
+    store.set(STORAGE_KEYS.lastSyncAt,state.lastSyncAt);
     showToast('已从云端拉取','success');
   }catch(err){ updateSyncStatus('error','拉取失败'); showToast('拉取失败：'+err.message,'error'); }
+}
+async function autoPullFromCloud(){
+  if(!state.autoPull||!state.gistId||!state.gistToken) return;
+  try{
+    const res=await fetch(`https://api.github.com/gists/${state.gistId}`,{headers:{'Authorization':`token ${state.gistToken}`}});
+    if(!res.ok) return;
+    const gist=await res.json(); const file=gist.files['workbench-data.json'];
+    if(!file) return;
+    const data=JSON.parse(file.content);
+    if(!data.syncedAt) return;
+    const cloudTime=new Date(data.syncedAt).getTime();
+    const localTime=state.lastSyncAt?new Date(state.lastSyncAt).getTime():0;
+    if(cloudTime<=localTime) return;
+    if(confirm(`云端有更新数据（${new Date(data.syncedAt).toLocaleString()}），是否拉取到本地？`)){
+      if(data.tasks)state.tasks=data.tasks; if(data.notes)state.notes=data.notes;
+      if(data.links)state.links=data.links; if(data.learns)state.learns=data.learns;
+      if(data.daily)state.daily=data.daily; if(data.userName)state.userName=data.userName;
+      if(data.brandName)updateBrand(data.brandName); if(data.city)state.city=data.city;
+      if(data.coords)state.coords=data.coords;
+      document.getElementById('userName').textContent=state.userName;
+      document.getElementById('brandInput').value=state.brandName;
+      updateCityDisplay(state.city,false); saveAndRender(); loadWeather();
+      state.lastSyncAt=new Date().toISOString();
+      store.set(STORAGE_KEYS.lastSyncAt,state.lastSyncAt);
+      updateSyncStatus('active','已拉取 '+new Date().toLocaleTimeString());
+      showToast('已自动拉取云端更新','success');
+    }
+  }catch(err){ /* 静默失败，不打扰用户 */ }
 }
 function updateSyncStatus(status,text){
   const dot=document.querySelector('#syncStatus .sync-dot');
@@ -906,6 +942,8 @@ function loadState(){
   state.coords=store.get(STORAGE_KEYS.coords,null); state.autoWeather=store.get(STORAGE_KEYS.autoWeather,true);
   state.gistId=store.get(STORAGE_KEYS.gistId,''); state.gistToken=store.get(STORAGE_KEYS.gistToken,'');
   state.autoSync=store.get(STORAGE_KEYS.autoSync,false);
+  state.autoPull=store.get(STORAGE_KEYS.autoPull,false);
+  state.lastSyncAt=store.get(STORAGE_KEYS.lastSyncAt,null);
 }
 function bindEvents(){
   setInterval(updateClock,1000); updateClock();
@@ -943,7 +981,7 @@ function bindEvents(){
   document.getElementById('settingsBtn').addEventListener('click',()=>{
     document.getElementById('settingsModal').classList.add('show');
     document.getElementById('gistId').value=state.gistId; document.getElementById('gistToken').value=state.gistToken;
-    document.getElementById('autoSyncSwitch').checked=state.autoSync; document.getElementById('brandInput').value=state.brandName;
+    document.getElementById('autoSyncSwitch').checked=state.autoSync; document.getElementById('autoPullSwitch').checked=state.autoPull; document.getElementById('brandInput').value=state.brandName;
     document.getElementById('manualCityInput').value=state.city||''; document.getElementById('autoWeatherSwitch').checked=state.autoWeather;
   });
   document.getElementById('settingsClose').addEventListener('click',()=>{ document.getElementById('settingsModal').classList.remove('show'); });
@@ -956,6 +994,7 @@ function bindEvents(){
   document.getElementById('gistId').addEventListener('change',e=>{ state.gistId=e.target.value.trim(); store.set(STORAGE_KEYS.gistId,state.gistId); });
   document.getElementById('gistToken').addEventListener('change',e=>{ state.gistToken=e.target.value.trim(); store.set(STORAGE_KEYS.gistToken,state.gistToken); });
   document.getElementById('autoSyncSwitch').addEventListener('change',e=>{ state.autoSync=e.target.checked; store.set(STORAGE_KEYS.autoSync,state.autoSync); showToast(e.target.checked?'自动同步已开启':'自动同步已关闭','info'); });
+  document.getElementById('autoPullSwitch').addEventListener('change',e=>{ state.autoPull=e.target.checked; store.set(STORAGE_KEYS.autoPull,state.autoPull); showToast(e.target.checked?'启动自动拉取已开启':'启动自动拉取已关闭','info'); });
   document.getElementById('uploadBtn').addEventListener('click',()=>uploadToGist(false));
   document.getElementById('downloadBtn').addEventListener('click',downloadFromGist);
   document.getElementById('todoAddBtn').addEventListener('click',addTodo);
@@ -989,7 +1028,7 @@ function init(){
   if(state.city){ updateCityDisplay(state.city,false); }
   else{ updateCityDisplay('',false); document.getElementById('cityName').textContent='点击定位'; }
   loadWeather(); startWeatherAutoRefresh(); registerServiceWorker();
-  if(state.gistId&&state.gistToken){ updateSyncStatus('active','已配置'); }
+  if(state.gistId&&state.gistToken){ updateSyncStatus('active','已配置'); setTimeout(autoPullFromCloud,2000); }
   if(state.coords&&!state.city){ reverseGeocode(state.coords.lat,state.coords.lon).then(city=>{ state.city=city; store.set(STORAGE_KEYS.city,city); updateCityDisplay(city,false); }); }
 }
 init();
