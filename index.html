@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="工作台">
+<title>个人工作台</title>
+<link rel="manifest" id="manifestLink">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234f46e5'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>工</text></svg>">
+<style>
+:root {
+  --bg: #f5f7fa; --bg-card: #ffffff; --bg-hover: #f0f2f5;
+  --text-primary: #1a1a2e; --text-secondary: #6b7280; --text-muted: #9ca3af;
+  --border: #e5e7eb; --border-light: #f0f2f5;
+  --accent: #4f46e5; --accent-light: #eef2ff; --accent-hover: #4338ca;
+  --success: #10b981; --success-light: #ecfdf5;
+  --warning: #f59e0b; --warning-light: #fffbeb;
+  --danger: #ef4444; --danger-light: #fef2f2;
+  --info: #3b82f6;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+  --radius: 12px; --radius-sm: 8px;
+  --note-yellow: #fef3c7; --note-green: #d1fae5; --note-blue: #dbeafe;
+  --note-pink: #fce7f3; --note-purple: #ede9fe; --note-orange: #fed7aa;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+  --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+  --border: #334155; --border-light: #1e293b;
+  --accent: #818cf8; --accent-light: #312e81; --accent-hover: #6366f1;
+  --success: #34d399; --success-light: #064e3b;
+  --warning: #fbbf24; --warning-light: #78350f;
+  --danger: #f87171; --danger-light: #7f1d1d;
+  --info: #60a5fa;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+  --note-yellow: #78350f; --note-green: #064e3b; --note-blue: #1e3a5f;
+  --note-pink: #831843; --note-purple: #4c1d95; --note-orange: #7c2d12;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text-primary);
+  min-height: 100vh; transition: background 0.3s, color 0.3s; line-height: 1.6;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.topbar {
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand {
+  font-size: 20px; font-weight: 700; color: var(--accent);
+  display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+}
+.brand-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.clock-block { display: flex; flex-direction: column; line-height: 1.3; }
+.clock-time { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.clock-date { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.city-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--accent-light); color: var(--accent);
+  padding: 1px 6px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: opacity 0.2s;
+}
+.city-badge:hover { opacity: 0.8; }
+.greeting { font-size: 15px; color: var(--text-secondary); }
+.greeting .name { color: var(--accent); font-weight: 600; cursor: pointer; border-bottom: 1px dashed transparent; transition: border-color 0.2s; }
+.greeting .name:hover { border-bottom-color: var(--accent); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.weather-box {
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+  background: var(--bg-hover); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; transition: background 0.2s;
+}
+.weather-box:hover { background: var(--border); }
+.icon-btn {
+  width: 36px; height: 36px; border: none; background: var(--bg-hover);
+  border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--text-secondary); transition: all 0.2s;
+}
+.icon-btn:hover { background: var(--accent-light); color: var(--accent); }
+.install-btn { display: none; }
+.install-btn.show { display: flex; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--bg-card); border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--border-light); transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.stat-value { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-value.accent { color: var(--accent); }
+.stat-value.success { color: var(--success); }
+.stat-value.warning { color: var(--warning); }
+.stat-value.info { color: var(--info); }
+.trend-section {
+  background: var(--bg-card); border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--border-light); margin-bottom: 24px;
+}
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.chart-container { display: flex; align-items: flex-end; gap: 12px; height: 120px; padding: 0 8px; }
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.chart-bar {
+  width: 100%; max-width: 40px; background: var(--accent-light); border-radius: 6px 6px 0 0;
+  transition: height 0.5s ease; position: relative; min-height: 4px;
+}
+.chart-bar.today { background: var(--accent); }
+.chart-bar .bar-value { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.chart-label { font-size: 11px; color: var(--text-muted); }
+.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.panel { background: var(--bg-card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-light); }
+.todo-input-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.todo-input {
+  flex: 1; min-width: 160px; padding: 10px 14px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 14px; background: var(--bg); color: var(--text-primary); outline: none; transition: border-color 0.2s;
+}
+.todo-input:focus { border-color: var(--accent); }
+.todo-time-input { width: 100px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg); color: var(--text-primary); outline: none; }
+.todo-priority-select { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg); color: var(--text-primary); cursor: pointer; outline: none; }
+.todo-tag-input { width: 100px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg); color: var(--text-primary); outline: none; }
+.btn { padding: 10px 18px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.filter-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.filter-tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; background: var(--bg-hover); color: var(--text-secondary); border: none; transition: all 0.2s; }
+.filter-tab.active { background: var(--accent); color: white; }
+.filter-tab:hover:not(.active) { background: var(--border); }
+.tag-filter { padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; background: var(--accent-light); color: var(--accent); border: 1px solid transparent; transition: all 0.2s; }
+.tag-filter.active { background: var(--accent); color: white; }
+.todo-list { list-style: none; max-height: 400px; overflow-y: auto; }
+.todo-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border-bottom: 1px solid var(--border-light); transition: background 0.2s; position: relative; }
+.todo-item:hover { background: var(--bg-hover); }
+.todo-item:hover .todo-delete { opacity: 1; }
+.todo-checkbox { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+.todo-checkbox.checked { background: var(--success); border-color: var(--success); }
+.todo-checkbox.checked::after { content: "✓"; color: white; font-size: 12px; font-weight: bold; }
+.todo-content { flex: 1; min-width: 0; }
+.todo-text { font-size: 14px; word-break: break-word; }
+.todo-item.completed .todo-text { text-decoration: line-through; color: var(--text-muted); }
+.todo-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+.todo-time { font-size: 11px; color: var(--text-muted); background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; }
+.priority-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+.priority-high { background: var(--danger-light); color: var(--danger); }
+.priority-medium { background: var(--warning-light); color: var(--warning); }
+.priority-low { background: var(--success-light); color: var(--success); }
+.todo-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--accent-light); color: var(--accent); }
+.todo-delete { opacity: 0; width: 24px; height: 24px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+.todo-delete:hover { background: var(--danger-light); color: var(--danger); }
+.empty-state { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 13px; }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+.note-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.note-search-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+.note-search { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg); color: var(--text-primary); outline: none; }
+.note-search:focus { border-color: var(--accent); }
+.color-picker { display: flex; gap: 4px; }
+.color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; }
+.color-dot:hover { transform: scale(1.15); }
+.color-dot.active { border-color: var(--text-primary); }
+.notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 400px; overflow-y: auto; }
+.note-card { padding: 14px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5; word-break: break-word; position: relative; min-height: 80px; transition: transform 0.2s, box-shadow 0.2s; cursor: default; }
+.note-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.note-card:hover .note-delete { opacity: 1; }
+.note-delete { opacity: 0; position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border: none; background: rgba(0,0,0,0.1); color: inherit; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; }
+.note-delete:hover { background: rgba(0,0,0,0.2); }
+.note-highlight { background: rgba(255,255,0,0.4); border-radius: 2px; padding: 0 2px; }
+.learn-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.learn-list { display: flex; flex-direction: column; gap: 14px; }
+.learn-item { padding: 12px; background: var(--bg); border-radius: var(--radius-sm); }
+.learn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+.learn-title { font-size: 14px; font-weight: 500; flex: 1; outline: none; cursor: text; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; }
+.learn-title:hover { background: var(--bg-hover); }
+.learn-title:focus { background: var(--bg-card); box-shadow: 0 0 0 2px var(--accent-light); }
+.learn-progress-text { font-size: 13px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
+.learn-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.learn-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--info)); border-radius: 4px; transition: width 0.4s ease; }
+.learn-actions { display: flex; gap: 6px; align-items: center; }
+.learn-avg { font-size: 12px; color: var(--text-secondary); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); text-align: right; }
+.link-input-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.link-input { flex: 1; min-width: 120px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg); color: var(--text-primary); outline: none; }
+.link-input:focus { border-color: var(--accent); }
+.links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.link-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-radius: var(--radius-sm); text-decoration: none; color: var(--text-primary); transition: all 0.2s; position: relative; border: 1px solid transparent; }
+.link-card:hover { background: var(--accent-light); border-color: var(--accent); transform: translateY(-1px); }
+.link-card:hover .link-delete { opacity: 1; }
+.link-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+.link-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.link-delete { opacity: 0; position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border: none; background: var(--danger); color: white; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: opacity 0.2s; z-index: 1; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--bg-card); border-radius: var(--radius); padding: 24px; max-width: 480px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: modalIn 0.25s ease; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-title { font-size: 18px; font-weight: 600; }
+.modal-close { width: 32px; height: 32px; border: none; background: var(--bg-hover); border-radius: 50%; cursor: pointer; font-size: 16px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.modal-close:hover { background: var(--danger-light); color: var(--danger); }
+.settings-section { margin-bottom: 20px; }
+.settings-section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-light); gap: 12px; }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 14px; flex: 1; }
+.settings-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); border-radius: 24px; transition: 0.3s; }
+.switch-slider::before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.switch input:checked + .switch-slider { background: var(--accent); }
+.switch input:checked + .switch-slider::before { transform: translateX(20px); }
+.settings-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg); color: var(--text-primary); outline: none; margin-top: 6px; }
+.settings-input:focus { border-color: var(--accent); }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.toast-container { position: fixed; top: 80px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 12px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; display: flex; align-items: center; gap: 8px; max-width: 320px; }
+.toast.success { background: var(--success); color: white; }
+.toast.error { background: var(--danger); color: white; }
+.toast.info { background: var(--info); color: white; }
+.toast.warning { background: var(--warning); color: white; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+.sync-status { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+.sync-dot.active { background: var(--success); animation: pulse 1.5s infinite; }
+.locating { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+@media (max-width: 900px) {
+  .dashboard { grid-template-columns: repeat(2, 1fr); }
+  .main-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .topbar { padding: 12px 16px; }
+  .container { padding: 16px; }
+  .dashboard { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-value { font-size: 24px; }
+  .clock-time { font-size: 18px; }
+  .brand { font-size: 16px; }
+  .todo-input-row, .note-input-row, .learn-input-row, .link-input-row { flex-direction: column; }
+  .todo-input, .todo-time-input, .todo-priority-select, .todo-tag-input, .link-input { width: 100%; }
+  .notes-grid { grid-template-columns: 1fr 1fr; }
+  .weather-box { padding: 6px 8px; font-size: 12px; }
+  .icon-btn { width: 32px; height: 32px; font-size: 14px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="brand" id="brandName" title="点击修改工作台名称">
+      <span class="brand-dot"></span>
+      <span id="brandText">个人工作台</span>
+    </div>
+    <div class="clock-block">
+      <span class="clock-time" id="clockTime">--:--:--</span>
+      <span class="clock-date">
+        <span id="clockDate">----年--月--日</span>
+        <span class="city-badge" id="cityBadge" title="点击定位当前城市">
+          <span class="locate-icon">📍</span>
+          <span id="cityName">定位中...</span>
+        </span>
+      </span>
+    </div>
+    <div class="greeting">
+      <span id="greetingText">你好</span>，<span class="name" id="userName" title="点击修改称呼">朋友</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="weather-box" id="weatherBox" title="点击刷新天气">
+      <span id="weatherIcon">🌤️</span>
+      <span id="weatherText">加载中...</span>
+    </div>
+    <button class="icon-btn install-btn" id="installBtn" title="安装到桌面">📱</button>
+    <button class="icon-btn" id="themeToggle" title="切换深色/浅色模式">🌓</button>
+    <button class="icon-btn" id="syncBtn" title="云端同步">☁️</button>
+    <button class="icon-btn" id="settingsBtn" title="设置">⚙️</button>
+  </div>
+</header>
+<div class="container">
+  <section class="dashboard">
+    <div class="stat-card"><div class="stat-label">今日完成</div><div class="stat-value success" id="statToday">0</div></div>
+    <div class="stat-card"><div class="stat-label">进行中</div><div class="stat-value warning" id="statActive">0</div></div>
+    <div class="stat-card"><div class="stat-label">本周完成</div><div class="stat-value accent" id="statWeek">0</div></div>
+    <div class="stat-card"><div class="stat-label">笔记 & 学习</div><div class="stat-value info" id="statNotes">0</div></div>
+  </section>
+  <section class="trend-section">
+    <div class="section-title">📊 近 7 天完成趋势</div>
+    <div class="chart-container" id="chartContainer"></div>
+  </section>
+  <div class="main-grid">
+    <section class="panel">
+      <div class="section-title">✅ 待办与日程</div>
+      <div class="todo-input-row">
+        <input type="text" class="todo-input" id="todoInput" placeholder="输入待办事项，回车添加..." maxlength="200">
+        <input type="time" class="todo-time-input" id="todoTime" title="可选时间">
+        <select class="todo-priority-select" id="todoPriority" title="优先级">
+          <option value="medium">中优先级</option>
+          <option value="high">高优先级</option>
+          <option value="low">低优先级</option>
+        </select>
+        <input type="text" class="todo-tag-input" id="todoTag" placeholder="标签" maxlength="10">
+        <button class="btn btn-primary" id="todoAddBtn">添加</button>
+      </div>
+      <div class="filter-bar" id="todoFilterBar">
+        <button class="filter-tab active" data-filter="all">全部</button>
+        <button class="filter-tab" data-filter="active">进行中</button>
+        <button class="filter-tab" data-filter="completed">已完成</button>
+        <span style="width:1px;height:16px;background:var(--border);margin:0 4px;"></span>
+        <button class="filter-tab" data-priority="high">🔴 高</button>
+        <button class="filter-tab" data-priority="medium">🟡 中</button>
+        <button class="filter-tab" data-priority="low">🟢 低</button>
+      </div>
+      <div class="filter-bar" id="tagFilterBar" style="display:none;"></div>
+      <ul class="todo-list" id="todoList"></ul>
+    </section>
+    <section class="panel">
+      <div class="section-title">📝 笔记速记</div>
+      <div class="note-search-row"><input type="text" class="note-search" id="noteSearch" placeholder="🔍 搜索笔记..."></div>
+      <div class="note-input-row">
+        <input type="text" class="todo-input" id="noteInput" placeholder="输入想法，回车生成便签..." maxlength="500">
+        <div class="color-picker" id="colorPicker">
+          <div class="color-dot active" data-color="yellow" style="background:var(--note-yellow)"></div>
+          <div class="color-dot" data-color="green" style="background:var(--note-green)"></div>
+          <div class="color-dot" data-color="blue" style="background:var(--note-blue)"></div>
+          <div class="color-dot" data-color="pink" style="background:var(--note-pink)"></div>
+          <div class="color-dot" data-color="purple" style="background:var(--note-purple)"></div>
+          <div class="color-dot" data-color="orange" style="background:var(--note-orange)"></div>
+        </div>
+        <button class="btn btn-primary" id="noteAddBtn">添加</button>
+      </div>
+      <div class="notes-grid" id="notesGrid"></div>
+    </section>
+    <section class="panel">
+      <div class="section-title">📚 学习内容</div>
+      <div class="learn-input-row">
+        <input type="text" class="todo-input" id="learnInput" placeholder="输入学习主题，回车添加..." maxlength="100">
+        <button class="btn btn-primary" id="learnAddBtn">添加</button>
+      </div>
+      <div class="learn-list" id="learnList"></div>
+      <div class="learn-avg" id="learnAvg"></div>
+    </section>
+    <section class="panel">
+      <div class="section-title">🔗 快捷导航</div>
+      <div class="link-input-row">
+        <input type="text" class="link-input" id="linkName" placeholder="网站名称" maxlength="30">
+        <input type="text" class="link-input" id="linkUrl" placeholder="网址 (如 https://...)" maxlength="200">
+        <button class="btn btn-primary" id="linkAddBtn">收藏</button>
+      </div>
+      <div class="links-grid" id="linksGrid"></div>
+    </section>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">⚙️ 设置</div><button class="modal-close" id="settingsClose">✕</button></div>
+    <div class="settings-section">
+      <div class="settings-section-title">通用</div>
+      <div class="settings-row">
+        <div class="settings-label" style="width:100%;">
+          工作台名称
+          <div class="settings-desc">显示在左上角的名称</div>
+          <input type="text" class="settings-input" id="brandInput" placeholder="个人工作台" maxlength="20">
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">外观</div>
+      <div class="settings-row">
+        <div class="settings-label">深色模式<div class="settings-desc">切换深色 / 浅色主题</div></div>
+        <label class="switch"><input type="checkbox" id="darkModeSwitch"><span class="switch-slider"></span></label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">跟随系统<div class="settings-desc">根据系统主题自动切换</div></div>
+        <label class="switch"><input type="checkbox" id="autoThemeSwitch"><span class="switch-slider"></span></label>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">位置与天气</div>
+      <div class="settings-row">
+        <div class="settings-label">当前位置<div class="settings-desc" id="locationDesc">未定位</div></div>
+        <button class="btn btn-ghost btn-sm" id="locateBtn">📍 重新定位</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label" style="width:100%;">
+          手动设置城市
+          <div class="settings-desc">定位失败时可手动输入城市名</div>
+          <input type="text" class="settings-input" id="manualCityInput" placeholder="如 上海 / Beijing / Tokyo">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">自动刷新天气<div class="settings-desc">每 30 分钟自动更新天气</div></div>
+        <label class="switch"><input type="checkbox" id="autoWeatherSwitch" checked><span class="switch-slider"></span></label>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">数据管理</div>
+      <div class="settings-row">
+        <div class="settings-label">导出备份<div class="settings-desc">将所有数据导出为 JSON 文件</div></div>
+        <button class="btn btn-ghost btn-sm" id="exportBtn">📥 导出</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">导入恢复<div class="settings-desc">从 JSON 文件恢复数据（会覆盖当前数据）</div></div>
+        <button class="btn btn-ghost btn-sm" id="importBtn">📤 导入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">重置数据<div class="settings-desc">清除所有数据并恢复示例内容</div></div>
+        <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);" id="resetBtn">🗑️ 重置</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">云端同步 (多端数据互通)</div>
+      <div class="settings-row">
+        <div class="settings-label" style="width:100%;">Gist ID<input type="text" class="settings-input" id="gistId" placeholder="Gist 的 ID（URL 末尾的字符串）"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label" style="width:100%;">GitHub Token<input type="password" class="settings-input" id="gistToken" placeholder="ghp_xxxx（需勾选 gist 权限）"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">自动同步<div class="settings-desc">本地变更后 1 分钟自动上传到云端</div></div>
+        <label class="switch"><input type="checkbox" id="autoSyncSwitch"><span class="switch-slider"></span></label>
+      </div>
+      <div class="btn-group" style="margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="uploadBtn">☁️ 上传到云端</button>
+        <button class="btn btn-ghost btn-sm" id="downloadBtn">⬇️ 从云端拉取</button>
+      </div>
+      <div class="sync-status" id="syncStatus" style="margin-top:10px;"><span class="sync-dot"></span><span id="syncStatusText">未配置同步</span></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">关于</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        <div>版本：v3.0</div>
+        <div>数据存储：本地浏览器 (localStorage)</div>
+        <div>天气数据：Open-Meteo（免费免密钥）</div>
+        <div>逆地理编码：OpenStreetMap Nominatim</div>
+        <div>支持 PWA 安装到桌面，离线可用</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="cityModal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><div class="modal-title">🌆 切换城市</div><button class="modal-close" id="cityClose">✕</button></div>
+    <div style="margin-bottom:12px;"><button class="btn btn-primary btn-sm" id="autoLocateBtn" style="width:100%;">📍 自动定位当前位置</button></div>
+    <input type="text" class="settings-input" id="cityInput" placeholder="或手动输入城市名，如 上海 / Beijing" style="margin-bottom:16px;">
+    <div class="btn-group"><button class="btn btn-primary" id="cityConfirm" style="flex:1;">确认</button></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const STORAGE_KEYS = {
+  tasks:'wb_tasks', notes:'wb_notes', links:'wb_links', learns:'wb_learns',
+  daily:'wb_daily', userName:'wb_userName', brandName:'wb_brandName', city:'wb_city',
+  coords:'wb_coords', theme:'wb_theme', autoTheme:'wb_autoTheme', autoWeather:'wb_autoWeather',
+  gistId:'wb_gistId', gistToken:'wb_gistToken', autoSync:'wb_autoSync'
+};
+const store = {
+  get(key, fallback){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch{ return fallback; } },
+  set(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+};
+let state = {
+  tasks:[], notes:[], links:[], learns:[], daily:{}, userName:'朋友', brandName:'个人工作台',
+  city:'', coords:null, theme:'light', autoTheme:false, autoWeather:true,
+  gistId:'', gistToken:'', autoSync:false, todoFilter:'all', todoPriorityFilter:null,
+  todoTagFilter:null, noteColor:'yellow', noteSearch:'', isLocating:false
+};
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function getWeekDates(){ const dates=[]; const today=new Date(); for(let i=6;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`); } return dates; }
+function escapeHtml(str){ const div=document.createElement('div'); div.textContent=str; return div.innerHTML; }
+function showToast(msg, type='info'){
+  const container=document.getElementById('toastContainer');
+  const toast=document.createElement('div');
+  toast.className=`toast ${type}`;
+  const icons={success:'✓',error:'✕',info:'ℹ',warning:'⚠'};
+  toast.innerHTML=`<span>${icons[type]||'ℹ'}</span><span>${escapeHtml(msg)}</span>`;
+  container.appendChild(toast);
+  setTimeout(()=>toast.remove(),3000);
+}
+function updateClock(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0'), m=String(now.getMinutes()).padStart(2,'0'), s=String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent=`${h}:${m}:${s}`;
+  const weekdays=['周日','周一','周二','周三','周四','周五','周六'];
+  document.getElementById('clockDate').textContent=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+  const hour=now.getHours(); let greet='你好';
+  if(hour<6)greet='夜深了'; else if(hour<9)greet='早上好'; else if(hour<12)greet='上午好';
+  else if(hour<14)greet='中午好'; else if(hour<18)greet='下午好'; else if(hour<22)greet='晚上好'; else greet='夜深了';
+  document.getElementById('greetingText').textContent=greet;
+}
+function updateCityDisplay(cityName, isLocating){
+  const cityEl=document.getElementById('cityName');
+  const locateIcon=document.querySelector('#cityBadge .locate-icon');
+  if(isLocating){ cityEl.textContent='定位中...'; locateIcon.textContent='🔄'; locateIcon.classList.add('locating'); }
+  else { locateIcon.classList.remove('locating'); locateIcon.textContent='📍'; cityEl.textContent=cityName||'未定位'; }
+  document.getElementById('locationDesc').textContent=cityName?`当前城市：${cityName}`:'未定位，点击右侧按钮定位';
+}
+async function reverseGeocode(lat, lon){
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh-CN&zoom=10`);
+    const data=await res.json();
+    if(data.address){
+      const city=data.address.city||data.address.town||data.address.village||data.address.county||data.address.state||data.address.province||data.address.municipality;
+      if(city) return city;
+    }
+    return data.display_name?data.display_name.split(',')[0]:'未知位置';
+  }catch{ return '未知位置'; }
+}
+function locateUser(){
+  if(state.isLocating) return;
+  state.isLocating=true; updateCityDisplay('',true);
+  if(!navigator.geolocation){
+    state.isLocating=false; updateCityDisplay('不支持定位',false);
+    showToast('浏览器不支持定位，请手动设置城市','warning'); return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async(position)=>{
+      const {latitude,longitude}=position.coords;
+      state.coords={lat:latitude,lon:longitude};
+      store.set(STORAGE_KEYS.coords, state.coords);
+      const cityName=await reverseGeocode(latitude,longitude);
+      state.city=cityName; store.set(STORAGE_KEYS.city,cityName);
+      state.isLocating=false; updateCityDisplay(cityName,false);
+      showToast(`已定位到：${cityName}`,'success');
+      loadWeather();
+    },
+    (error)=>{
+      state.isLocating=false;
+      let msg='定位失败';
+      switch(error.code){
+        case error.PERMISSION_DENIED:msg='定位权限被拒绝，请在设置中允许定位';break;
+        case error.POSITION_UNAVAILABLE:msg='位置信息不可用';break;
+        case error.TIMEOUT:msg='定位超时';break;
+      }
+      updateCityDisplay('定位失败',false);
+      showToast(msg+'，可手动设置城市','warning');
+    },
+    {enableHighAccuracy:true,timeout:10000,maximumAge:300000}
+  );
+}
+async function loadWeather(){
+  const iconEl=document.getElementById('weatherIcon');
+  const textEl=document.getElementById('weatherText');
+  let lat,lon;
+  if(state.coords){ lat=state.coords.lat; lon=state.coords.lon; }
+  else{
+    const cityCoords={'beijing':[39.9042,116.4074],'shanghai':[31.2304,121.4737],'guangzhou':[23.1291,113.2644],'shenzhen':[22.5431,114.0579],'hangzhou':[30.2741,120.1551],'nanjing':[32.0603,118.7969],'chengdu':[30.5728,104.0668],'wuhan':[30.5928,114.3055],'xian':[34.3416,108.9398],'chongqing':[29.4316,106.9123],'tianjin':[39.3434,117.3616],'suzhou':[31.2989,120.5853],'qingdao':[36.0671,120.3826],'xiamen':[24.4798,118.0894],'dalian':[38.9140,121.6147],'ningbo':[29.8683,121.5440],'tokyo':[35.6762,139.6503],'new york':[40.7128,-74.0060],'london':[51.5074,-0.1278],'paris':[48.8566,2.3522],'sydney':[-33.8688,151.2093],'singapore':[1.3521,103.8198],'北京':[39.9042,116.4074],'上海':[31.2304,121.4737],'广州':[23.1291,113.2644],'深圳':[22.5431,114.0579],'杭州':[30.2741,120.1551],'南京':[32.0603,118.7969],'成都':[30.5728,104.0668],'武汉':[30.5928,114.3055],'西安':[34.3416,108.9398],'重庆':[29.4316,106.9123],'天津':[39.3434,117.3616],'苏州':[31.2989,120.5853],'青岛':[36.0671,120.3826],'厦门':[24.4798,118.0894],'大连':[38.9140,121.6147],'宁波':[29.8683,121.5440]};
+    const key=(state.city||'').toLowerCase().trim();
+    if(cityCoords[key]){ [lat,lon]=cityCoords[key]; }
+    else{ iconEl.textContent='📍'; textEl.textContent=state.city||'设置城市'; return; }
+  }
+  try{
+    const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`);
+    const data=await res.json();
+    const temp=Math.round(data.current.temperature_2m);
+    const feelsLike=Math.round(data.current.apparent_temperature);
+    const humidity=data.current.relative_humidity_2m;
+    const wind=Math.round(data.current.wind_speed_10m);
+    const code=data.current.weather_code;
+    const weatherMap={0:['☀️','晴'],1:['🌤️','晴间多云'],2:['⛅','多云'],3:['☁️','阴'],45:['🌫️','雾'],48:['🌫️','雾凇'],51:['🌦️','小毛毛雨'],53:['🌦️','毛毛雨'],55:['🌧️','大毛毛雨'],61:['🌧️','小雨'],63:['🌧️','中雨'],65:['🌧️','大雨'],71:['🌨️','小雪'],73:['🌨️','中雪'],75:['❄️','大雪'],80:['🌦️','阵雨'],81:['🌧️','强阵雨'],82:['⛈️','暴雨'],95:['⛈️','雷暴'],96:['⛈️','雷暴伴冰雹'],99:['⛈️','强雷暴']};
+    const [icon,desc]=weatherMap[code]||['🌡️','未知'];
+    iconEl.textContent=icon; textEl.textContent=`${temp}°C ${desc}`;
+    textEl.title=`体感 ${feelsLike}°C · 湿度 ${humidity}% · 风速 ${wind}km/h`;
+  }catch{ iconEl.textContent='📡'; textEl.textContent='天气离线'; }
+}
+let weatherTimer=null;
+function startWeatherAutoRefresh(){
+  if(weatherTimer) clearInterval(weatherTimer);
+  if(state.autoWeather){ weatherTimer=setInterval(loadWeather,30*60*1000); }
+}
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme);
+  state.theme=theme; store.set(STORAGE_KEYS.theme,theme);
+  document.getElementById('darkModeSwitch').checked=theme==='dark';
+  document.getElementById('themeToggle').textContent=theme==='dark'?'☀️':'🌙';
+  document.querySelector('meta[name="theme-color"]').setAttribute('content',theme==='dark'?'#0f172a':'#4f46e5');
+}
+function initTheme(){
+  const savedTheme=store.get(STORAGE_KEYS.theme,'light');
+  const autoTheme=store.get(STORAGE_KEYS.autoTheme,false);
+  state.autoTheme=autoTheme; document.getElementById('autoThemeSwitch').checked=autoTheme;
+  if(autoTheme){
+    const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark?'dark':'light');
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{ if(state.autoTheme) applyTheme(e.matches?'dark':'light'); });
+  } else { applyTheme(savedTheme); }
+}
+function updateBrand(name){
+  state.brandName=name||'个人工作台';
+  document.getElementById('brandText').textContent=state.brandName;
+  document.title=state.brandName;
+  store.set(STORAGE_KEYS.brandName,state.brandName);
+  updateManifest();
+}
+function updateManifest(){
+  const manifest={
+    name:state.brandName, short_name:state.brandName.length>6?'工作台':state.brandName,
+    description:'个人效率工作台', start_url:'.', display:'standalone',
+    background_color:state.theme==='dark'?'#0f172a':'#f5f7fa', theme_color:'#4f46e5', orientation:'any',
+    icons:[
+      {src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='%234f46e5'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>工</text></svg>",sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'},
+      {src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%234f46e5'/><text x='256' y='350' font-size='280' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>工</text></svg>",sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  const url=URL.createObjectURL(blob);
+  document.getElementById('manifestLink').href=url;
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('installBtn').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(!deferredPrompt){ showToast('请通过浏览器菜单"添加到主屏幕"','info'); return; }
+  deferredPrompt.prompt();
+  const {outcome}=await deferredPrompt.userChoice;
+  if(outcome==='accepted'){ showToast('已添加到桌面','success'); }
+  deferredPrompt=null; document.getElementById('installBtn').classList.remove('show');
+});
+function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol==='file:') return;
+  const swCode=`
+    const CACHE_NAME='workbench-v3';
+    const CORE_ASSETS=[self.location.href];
+    self.addEventListener('install',(event)=>{ event.waitUntil(caches.open(CACHE_NAME).then((cache)=>cache.addAll(CORE_ASSETS))); self.skipWaiting(); });
+    self.addEventListener('activate',(event)=>{ event.waitUntil(caches.keys().then((keys)=>Promise.all(keys.filter((k)=>k!==CACHE_NAME).map((k)=>caches.delete(k))))); self.clients.claim(); });
+    self.addEventListener('fetch',(event)=>{
+      const req=event.request; if(req.method!=='GET') return;
+      if(req.mode==='navigate'||req.destination==='document'){
+        event.respondWith(fetch(req).then((res)=>{ const clone=res.clone(); caches.open(CACHE_NAME).then((cache)=>cache.put(req,clone)); return res; }).catch(()=>caches.match(req).then((cached)=>cached||caches.match(self.location.href))));
+        return;
+      }
+      event.respondWith(caches.match(req).then((cached)=>{ if(cached) return cached; return fetch(req).then((res)=>{ if(res&&res.status===200&&res.type==='basic'){ const clone=res.clone(); caches.open(CACHE_NAME).then((cache)=>cache.put(req,clone)); } return res; }).catch(()=>cached); }));
+    });
+  `;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).then(()=>{ console.log('Service Worker 注册成功'); }).catch(()=>{});
+}
+function renderTodos(){
+  const list=document.getElementById('todoList');
+  let tasks=[...state.tasks];
+  if(state.todoFilter==='active') tasks=tasks.filter(t=>!t.completed);
+  else if(state.todoFilter==='completed') tasks=tasks.filter(t=>t.completed);
+  if(state.todoPriorityFilter) tasks=tasks.filter(t=>t.priority===state.todoPriorityFilter);
+  if(state.todoTagFilter) tasks=tasks.filter(t=>t.tag===state.todoTagFilter);
+  const priorityOrder={high:0,medium:1,low:2};
+  tasks.sort((a,b)=>{
+    if(a.completed!==b.completed) return a.completed?1:-1;
+    if(a.priority!==b.priority) return priorityOrder[a.priority]-priorityOrder[b.priority];
+    if(a.time&&b.time) return a.time.localeCompare(b.time);
+    if(a.time) return -1; if(b.time) return 1;
+    return b.createdAt-a.createdAt;
+  });
+  if(tasks.length===0){ list.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div>暂无待办事项</div>`; return; }
+  list.innerHTML=tasks.map(t=>{
+    const priorityClass=`priority-${t.priority||'medium'}`;
+    const priorityText={high:'高',medium:'中',low:'低'}[t.priority||'medium'];
+    return `<li class="todo-item ${t.completed?'completed':''}" data-id="${t.id}">
+      <div class="todo-checkbox ${t.completed?'checked':''}" data-action="toggle"></div>
+      <div class="todo-content"><div class="todo-text">${escapeHtml(t.text)}</div>
+      <div class="todo-meta">${t.time?`<span class="todo-time">🕐 ${escapeHtml(t.time)}</span>`:''}
+      <span class="priority-badge ${priorityClass}">${priorityText}</span>
+      ${t.tag?`<span class="todo-tag">#${escapeHtml(t.tag)}</span>`:''}</div></div>
+      <button class="todo-delete" data-action="delete" title="删除">✕</button></li>`;
+  }).join('');
+}
+function addTodo(){
+  const input=document.getElementById('todoInput');
+  const timeInput=document.getElementById('todoTime');
+  const prioritySelect=document.getElementById('todoPriority');
+  const tagInput=document.getElementById('todoTag');
+  const text=input.value.trim();
+  if(!text){ showToast('请输入待办内容','warning'); return; }
+  state.tasks.push({id:uid(),text,completed:false,time:timeInput.value||'',priority:prioritySelect.value,tag:tagInput.value.trim()||'',createdAt:Date.now()});
+  input.value=''; timeInput.value=''; tagInput.value=''; prioritySelect.value='medium';
+  saveAndRender(); showToast('待办已添加','success');
+}
+function toggleTodo(id){
+  const task=state.tasks.find(t=>t.id===id); if(!task) return;
+  task.completed=!task.completed;
+  if(task.completed){ const today=todayStr(); state.daily[today]=(state.daily[today]||0)+1; }
+  saveAndRender();
+}
+function deleteTodo(id){ state.tasks=state.tasks.filter(t=>t.id!==id); saveAndRender(); showToast('已删除','info'); }
+function renderTagFilters(){
+  const tags=[...new Set(state.tasks.filter(t=>t.tag).map(t=>t.tag))];
+  const bar=document.getElementById('tagFilterBar');
+  if(tags.length===0){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML=tags.map(tag=>`<button class="tag-filter ${state.todoTagFilter===tag?'active':''}" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join('');
+}
+function renderNotes(){
+  const grid=document.getElementById('notesGrid');
+  let notes=[...state.notes];
+  if(state.noteSearch){ const q=state.noteSearch.toLowerCase(); notes=notes.filter(n=>n.text.toLowerCase().includes(q)); }
+  if(notes.length===0){ grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📝</div>${state.noteSearch?'没有匹配的笔记':'暂无笔记，快来记录想法吧'}</div>`; return; }
+  grid.innerHTML=notes.map(n=>{
+    let text=escapeHtml(n.text);
+    if(state.noteSearch){ const regex=new RegExp(`(${state.noteSearch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'); text=text.replace(regex,'<span class="note-highlight">$1</span>'); }
+    return `<div class="note-card" style="background:var(--note-${n.color})" data-id="${n.id}">${text}<button class="note-delete" data-action="delete-note" title="删除">✕</button></div>`;
+  }).join('');
+}
+function addNote(){
+  const input=document.getElementById('noteInput'); const text=input.value.trim();
+  if(!text){ showToast('请输入笔记内容','warning'); return; }
+  state.notes.unshift({id:uid(),text,color:state.noteColor,createdAt:Date.now()});
+  input.value=''; saveAndRender(); showToast('笔记已添加','success');
+}
+function deleteNote(id){ state.notes=state.notes.filter(n=>n.id!==id); saveAndRender(); }
+function renderLearns(){
+  const list=document.getElementById('learnList');
+  if(state.learns.length===0){ list.innerHTML=`<div class="empty-state"><div class="empty-icon">📚</div>暂无学习主题</div>`; document.getElementById('learnAvg').textContent=''; return; }
+  list.innerHTML=state.learns.map(l=>`<div class="learn-item" data-id="${l.id}">
+    <div class="learn-header"><span class="learn-title" contenteditable="true" data-action="edit-learn">${escapeHtml(l.title)}</span><span class="learn-progress-text">${l.progress}%</span></div>
+    <div class="learn-bar"><div class="learn-bar-fill" style="width:${l.progress}%"></div></div>
+    <div class="learn-actions"><button class="btn btn-ghost btn-sm" data-action="learn-dec">−10%</button><button class="btn btn-ghost btn-sm" data-action="learn-inc">+10%</button><button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger);margin-left:auto;" data-action="learn-del">删除</button></div></div>`).join('');
+  const avg=Math.round(state.learns.reduce((s,l)=>s+l.progress,0)/state.learns.length);
+  document.getElementById('learnAvg').textContent=`平均进度：${avg}%`;
+}
+function addLearn(){
+  const input=document.getElementById('learnInput'); const title=input.value.trim();
+  if(!title){ showToast('请输入学习主题','warning'); return; }
+  state.learns.push({id:uid(),title,progress:0,createdAt:Date.now()});
+  input.value=''; saveAndRender(); showToast('学习主题已添加','success');
+}
+function adjustLearn(id,delta){ const l=state.learns.find(x=>x.id===id); if(!l) return; l.progress=Math.max(0,Math.min(100,l.progress+delta)); if(l.progress===100) showToast('🎉 学习完成！','success'); saveAndRender(); }
+function deleteLearn(id){ state.learns=state.learns.filter(l=>l.id!==id); saveAndRender(); }
+const LINK_COLORS=['#4f46e5','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1'];
+function renderLinks(){
+  const grid=document.getElementById('linksGrid');
+  if(state.links.length===0){ grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🔗</div>暂无收藏网站</div>`; return; }
+  grid.innerHTML=state.links.map((l,i)=>{
+    const color=LINK_COLORS[i%LINK_COLORS.length]; const initial=l.name.charAt(0).toUpperCase();
+    let url=l.url; if(!url.startsWith('http://')&&!url.startsWith('https://')){ url='https://'+url; }
+    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="link-card" data-id="${l.id}"><div class="link-icon" style="background:${color}">${escapeHtml(initial)}</div><span class="link-name">${escapeHtml(l.name)}</span><button class="link-delete" data-action="delete-link" title="删除">✕</button></a>`;
+  }).join('');
+}
+function addLink(){
+  const nameInput=document.getElementById('linkName'); const urlInput=document.getElementById('linkUrl');
+  const name=nameInput.value.trim(); const url=urlInput.value.trim();
+  if(!name||!url){ showToast('请填写名称和网址','warning'); return; }
+  state.links.push({id:uid(),name,url,createdAt:Date.now()});
+  nameInput.value=''; urlInput.value=''; saveAndRender(); showToast('网站已收藏','success');
+}
+function deleteLink(id){ state.links=state.links.filter(l=>l.id!==id); saveAndRender(); }
+function renderDashboard(){
+  const today=todayStr();
+  document.getElementById('statToday').textContent=state.daily[today]||0;
+  document.getElementById('statActive').textContent=state.tasks.filter(t=>!t.completed).length;
+  const weekDates=getWeekDates(); let weekCount=0;
+  weekDates.forEach(d=>{ weekCount+=state.daily[d]||0; });
+  document.getElementById('statWeek').textContent=weekCount;
+  document.getElementById('statNotes').textContent=state.notes.length+state.learns.length;
+  const chart=document.getElementById('chartContainer');
+  const maxVal=Math.max(1,...weekDates.map(d=>state.daily[d]||0));
+  chart.innerHTML=weekDates.map(d=>{
+    const val=state.daily[d]||0; const height=(val/maxVal)*100;
+    const date=new Date(d); const label=`${date.getMonth()+1}/${date.getDate()}`;
+    const isToday=d===today;
+    return `<div class="chart-bar-wrap"><div class="chart-bar ${isToday?'today':''}" style="height:${height}%">${val>0?`<span class="bar-value">${val}</span>`:''}</div><span class="chart-label">${label}${isToday?' 今天':''}</span></div>`;
+  }).join('');
+}
+function saveState(){
+  store.set(STORAGE_KEYS.tasks,state.tasks); store.set(STORAGE_KEYS.notes,state.notes);
+  store.set(STORAGE_KEYS.links,state.links); store.set(STORAGE_KEYS.learns,state.learns);
+  store.set(STORAGE_KEYS.daily,state.daily); store.set(STORAGE_KEYS.userName,state.userName);
+  store.set(STORAGE_KEYS.brandName,state.brandName); store.set(STORAGE_KEYS.city,state.city);
+  store.set(STORAGE_KEYS.coords,state.coords); triggerAutoSync();
+}
+function saveAndRender(){ saveState(); renderAll(); }
+function renderAll(){ renderTodos(); renderTagFilters(); renderNotes(); renderLearns(); renderLinks(); renderDashboard(); }
+function exportData(){
+  const data={tasks:state.tasks,notes:state.notes,links:state.links,learns:state.learns,daily:state.daily,userName:state.userName,brandName:state.brandName,city:state.city,coords:state.coords,exportedAt:new Date().toISOString(),version:'3.0'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`workbench-backup-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url); showToast('数据已导出','success');
+}
+function importData(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.tasks&&!data.notes){ showToast('文件格式不正确','error'); return; }
+      if(!confirm('导入将覆盖当前所有数据，确定继续吗？')) return;
+      if(data.tasks)state.tasks=data.tasks; if(data.notes)state.notes=data.notes;
+      if(data.links)state.links=data.links; if(data.learns)state.learns=data.learns;
+      if(data.daily)state.daily=data.daily; if(data.userName)state.userName=data.userName;
+      if(data.brandName)updateBrand(data.brandName); if(data.city)state.city=data.city;
+      if(data.coords)state.coords=data.coords;
+      document.getElementById('userName').textContent=state.userName;
+      document.getElementById('brandInput').value=state.brandName;
+      updateCityDisplay(state.city,false); saveAndRender(); loadWeather();
+      showToast('数据导入成功','success');
+    }catch(err){ showToast('文件解析失败：'+err.message,'error'); }
+  };
+  reader.readAsText(file);
+}
+function resetData(){
+  if(!confirm('确定要重置所有数据吗？此操作不可恢复！')) return;
+  if(!confirm('再次确认：所有待办、笔记、学习记录、导航都将被清除并恢复示例数据。')) return;
+  localStorage.clear(); loadState(); initSampleData(); saveState(); renderAll();
+  document.getElementById('userName').textContent=state.userName;
+  updateBrand(state.brandName); document.getElementById('brandInput').value=state.brandName;
+  updateCityDisplay(state.city,false); loadWeather(); showToast('数据已重置','success');
+}
+let syncTimer=null;
+function triggerAutoSync(){
+  if(!state.autoSync||!state.gistId||!state.gistToken) return;
+  if(syncTimer) clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{ uploadToGist(true); },60000);
+}
+async function uploadToGist(silent=false){
+  if(!state.gistId||!state.gistToken){ showToast('请先在设置中配置 Gist ID 和 Token','warning'); return; }
+  updateSyncStatus('syncing','正在上传...');
+  try{
+    const data={tasks:state.tasks,notes:state.notes,links:state.links,learns:state.learns,daily:state.daily,userName:state.userName,brandName:state.brandName,city:state.city,coords:state.coords,syncedAt:new Date().toISOString()};
+    const res=await fetch(`https://api.github.com/gists/${state.gistId}`,{method:'PATCH',headers:{'Authorization':`token ${state.gistToken}`,'Content-Type':'application/json'},body:JSON.stringify({files:{'workbench-data.json':{content:JSON.stringify(data,null,2)}}})});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    updateSyncStatus('active','已同步 '+new Date().toLocaleTimeString());
+    if(!silent) showToast('已上传到云端','success');
+  }catch(err){ updateSyncStatus('error','同步失败'); if(!silent) showToast('上传失败：'+err.message,'error'); }
+}
+async function downloadFromGist(){
+  if(!state.gistId||!state.gistToken){ showToast('请先在设置中配置 Gist ID 和 Token','warning'); return; }
+  updateSyncStatus('syncing','正在拉取...');
+  try{
+    const res=await fetch(`https://api.github.com/gists/${state.gistId}`,{headers:{'Authorization':`token ${state.gistToken}`}});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const gist=await res.json(); const file=gist.files['workbench-data.json'];
+    if(!file) throw new Error('Gist 中没有 workbench-data.json');
+    const data=JSON.parse(file.content);
+    if(data.syncedAt){ if(!confirm(`云端数据更新于 ${new Date(data.syncedAt).toLocaleString()}，确定覆盖本地数据吗？`)){ updateSyncStatus('active','已取消'); return; } }
+    if(data.tasks)state.tasks=data.tasks; if(data.notes)state.notes=data.notes;
+    if(data.links)state.links=data.links; if(data.learns)state.learns=data.learns;
+    if(data.daily)state.daily=data.daily; if(data.userName)state.userName=data.userName;
+    if(data.brandName)updateBrand(data.brandName); if(data.city)state.city=data.city;
+    if(data.coords)state.coords=data.coords;
+    document.getElementById('userName').textContent=state.userName;
+    document.getElementById('brandInput').value=state.brandName;
+    updateCityDisplay(state.city,false); saveAndRender(); loadWeather();
+    updateSyncStatus('active','已拉取 '+new Date().toLocaleTimeString());
+    showToast('已从云端拉取','success');
+  }catch(err){ updateSyncStatus('error','拉取失败'); showToast('拉取失败：'+err.message,'error'); }
+}
+function updateSyncStatus(status,text){
+  const dot=document.querySelector('#syncStatus .sync-dot');
+  const textEl=document.getElementById('syncStatusText');
+  dot.className='sync-dot'+(status==='active'?' active':'');
+  if(status==='error')dot.style.background='var(--danger)';
+  else if(status==='syncing')dot.style.background='var(--warning)';
+  else dot.style.background='';
+  textEl.textContent=text;
+}
+function initSampleData(){
+  if(state.tasks.length>0||localStorage.getItem(STORAGE_KEYS.tasks)) return;
+  state.tasks=[
+    {id:uid(),text:'完成项目周报',completed:false,time:'10:00',priority:'high',tag:'工作',createdAt:Date.now()-3000},
+    {id:uid(),text:'阅读《深度工作》第3章',completed:false,time:'14:00',priority:'medium',tag:'学习',createdAt:Date.now()-2000},
+    {id:uid(),text:'健身房锻炼 1 小时',completed:true,time:'19:00',priority:'low',tag:'健康',createdAt:Date.now()-1000},
+    {id:uid(),text:'回复客户邮件',completed:true,time:'09:30',priority:'high',tag:'工作',createdAt:Date.now()-4000}
+  ];
+  state.notes=[
+    {id:uid(),text:'已完成：实时定位、深色模式、导入导出、笔记搜索',color:'green',createdAt:Date.now()},
+    {id:uid(),text:'支持 PWA 安装到桌面，手机电脑随时随地可用',color:'blue',createdAt:Date.now()-1000},
+    {id:uid(),text:'云端同步配置后，多端数据自动互通',color:'yellow',createdAt:Date.now()-2000}
+  ];
+  state.learns=[
+    {id:uid(),title:'JavaScript 高级程序设计',progress:45,createdAt:Date.now()},
+    {id:uid(),title:'React 官方文档',progress:70,createdAt:Date.now()-1000},
+    {id:uid(),title:'产品设计思维',progress:20,createdAt:Date.now()-2000}
+  ];
+  state.links=[
+    {id:uid(),name:'GitHub',url:'https://github.com',createdAt:Date.now()},
+    {id:uid(),name:'掘金',url:'https://juejin.cn',createdAt:Date.now()-1000},
+    {id:uid(),name:'MDN',url:'https://developer.mozilla.org',createdAt:Date.now()-2000},
+    {id:uid(),name:'Notion',url:'https://notion.so',createdAt:Date.now()-3000}
+  ];
+  const today=todayStr(); state.daily[today]=2;
+  const dates=getWeekDates();
+  dates.forEach((d,i)=>{ if(d!==today&&!state.daily[d]){ state.daily[d]=Math.floor(Math.random()*5); } });
+}
+function loadState(){
+  state.tasks=store.get(STORAGE_KEYS.tasks,[]); state.notes=store.get(STORAGE_KEYS.notes,[]);
+  state.links=store.get(STORAGE_KEYS.links,[]); state.learns=store.get(STORAGE_KEYS.learns,[]);
+  state.daily=store.get(STORAGE_KEYS.daily,{}); state.userName=store.get(STORAGE_KEYS.userName,'朋友');
+  state.brandName=store.get(STORAGE_KEYS.brandName,'个人工作台'); state.city=store.get(STORAGE_KEYS.city,'');
+  state.coords=store.get(STORAGE_KEYS.coords,null); state.autoWeather=store.get(STORAGE_KEYS.autoWeather,true);
+  state.gistId=store.get(STORAGE_KEYS.gistId,''); state.gistToken=store.get(STORAGE_KEYS.gistToken,'');
+  state.autoSync=store.get(STORAGE_KEYS.autoSync,false);
+}
+function bindEvents(){
+  setInterval(updateClock,1000); updateClock();
+  document.getElementById('brandText').textContent=state.brandName;
+  document.title=state.brandName; document.getElementById('brandInput').value=state.brandName;
+  document.getElementById('brandName').addEventListener('click',()=>{
+    const newName=prompt('输入工作台名称：',state.brandName);
+    if(newName!==null&&newName.trim()){ updateBrand(newName.trim()); document.getElementById('brandInput').value=state.brandName; showToast('名称已更新','success'); }
+  });
+  document.getElementById('brandInput').addEventListener('change',e=>{ updateBrand(e.target.value.trim()); showToast('名称已更新','success'); });
+  const nameEl=document.getElementById('userName'); nameEl.textContent=state.userName;
+  nameEl.addEventListener('click',()=>{
+    const newName=prompt('输入你的称呼：',state.userName);
+    if(newName&&newName.trim()){ state.userName=newName.trim(); nameEl.textContent=state.userName; saveState(); showToast('称呼已更新','success'); }
+  });
+  document.getElementById('cityBadge').addEventListener('click',()=>{ document.getElementById('cityInput').value=state.city||''; document.getElementById('cityModal').classList.add('show'); });
+  document.getElementById('weatherBox').addEventListener('click',()=>{ loadWeather(); showToast('正在刷新天气...','info'); });
+  document.getElementById('cityClose').addEventListener('click',()=>{ document.getElementById('cityModal').classList.remove('show'); });
+  document.getElementById('autoLocateBtn').addEventListener('click',()=>{ document.getElementById('cityModal').classList.remove('show'); locateUser(); });
+  document.getElementById('cityConfirm').addEventListener('click',()=>{
+    const city=document.getElementById('cityInput').value.trim();
+    if(city){ state.city=city; state.coords=null; store.set(STORAGE_KEYS.city,city); store.set(STORAGE_KEYS.coords,null); updateCityDisplay(city,false); loadWeather(); document.getElementById('cityModal').classList.remove('show'); showToast('城市已设置','success'); }
+  });
+  document.getElementById('locateBtn').addEventListener('click',locateUser);
+  document.getElementById('manualCityInput').value=state.city||'';
+  document.getElementById('manualCityInput').addEventListener('change',e=>{
+    const city=e.target.value.trim();
+    if(city){ state.city=city; state.coords=null; store.set(STORAGE_KEYS.city,city); store.set(STORAGE_KEYS.coords,null); updateCityDisplay(city,false); loadWeather(); showToast('城市已设置','success'); }
+  });
+  document.getElementById('autoWeatherSwitch').checked=state.autoWeather;
+  document.getElementById('autoWeatherSwitch').addEventListener('change',e=>{ state.autoWeather=e.target.checked; store.set(STORAGE_KEYS.autoWeather,state.autoWeather); startWeatherAutoRefresh(); showToast(e.target.checked?'已开启自动刷新天气':'已关闭自动刷新天气','info'); });
+  document.getElementById('themeToggle').addEventListener('click',()=>{ state.autoTheme=false; store.set(STORAGE_KEYS.autoTheme,false); document.getElementById('autoThemeSwitch').checked=false; applyTheme(state.theme==='dark'?'light':'dark'); });
+  document.getElementById('darkModeSwitch').addEventListener('change',e=>{ state.autoTheme=false; store.set(STORAGE_KEYS.autoTheme,false); document.getElementById('autoThemeSwitch').checked=false; applyTheme(e.target.checked?'dark':'light'); });
+  document.getElementById('autoThemeSwitch').addEventListener('change',e=>{ state.autoTheme=e.target.checked; store.set(STORAGE_KEYS.autoTheme,e.target.checked); if(e.target.checked){ const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches; applyTheme(prefersDark?'dark':'light'); } showToast(e.target.checked?'已开启跟随系统':'已关闭跟随系统','info'); });
+  document.getElementById('settingsBtn').addEventListener('click',()=>{
+    document.getElementById('settingsModal').classList.add('show');
+    document.getElementById('gistId').value=state.gistId; document.getElementById('gistToken').value=state.gistToken;
+    document.getElementById('autoSyncSwitch').checked=state.autoSync; document.getElementById('brandInput').value=state.brandName;
+    document.getElementById('manualCityInput').value=state.city||''; document.getElementById('autoWeatherSwitch').checked=state.autoWeather;
+  });
+  document.getElementById('settingsClose').addEventListener('click',()=>{ document.getElementById('settingsModal').classList.remove('show'); });
+  document.getElementById('settingsModal').addEventListener('click',e=>{ if(e.target.id==='settingsModal'){ document.getElementById('settingsModal').classList.remove('show'); } });
+  document.getElementById('syncBtn').addEventListener('click',()=>{ document.getElementById('settingsBtn').click(); });
+  document.getElementById('exportBtn').addEventListener('click',exportData);
+  document.getElementById('importBtn').addEventListener('click',()=>{ document.getElementById('importFile').click(); });
+  document.getElementById('importFile').addEventListener('change',e=>{ if(e.target.files[0]) importData(e.target.files[0]); e.target.value=''; });
+  document.getElementById('resetBtn').addEventListener('click',resetData);
+  document.getElementById('gistId').addEventListener('change',e=>{ state.gistId=e.target.value.trim(); store.set(STORAGE_KEYS.gistId,state.gistId); });
+  document.getElementById('gistToken').addEventListener('change',e=>{ state.gistToken=e.target.value.trim(); store.set(STORAGE_KEYS.gistToken,state.gistToken); });
+  document.getElementById('autoSyncSwitch').addEventListener('change',e=>{ state.autoSync=e.target.checked; store.set(STORAGE_KEYS.autoSync,state.autoSync); showToast(e.target.checked?'自动同步已开启':'自动同步已关闭','info'); });
+  document.getElementById('uploadBtn').addEventListener('click',()=>uploadToGist(false));
+  document.getElementById('downloadBtn').addEventListener('click',downloadFromGist);
+  document.getElementById('todoAddBtn').addEventListener('click',addTodo);
+  document.getElementById('todoInput').addEventListener('keydown',e=>{ if(e.key==='Enter')addTodo(); });
+  document.getElementById('todoTag').addEventListener('keydown',e=>{ if(e.key==='Enter')addTodo(); });
+  document.getElementById('todoFilterBar').addEventListener('click',e=>{
+    const tab=e.target.closest('.filter-tab'); if(!tab) return;
+    if(tab.dataset.filter){ state.todoFilter=tab.dataset.filter; state.todoPriorityFilter=null; document.querySelectorAll('#todoFilterBar .filter-tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active'); }
+    else if(tab.dataset.priority){ state.todoPriorityFilter=state.todoPriorityFilter===tab.dataset.priority?null:tab.dataset.priority; document.querySelectorAll('#todoFilterBar [data-priority]').forEach(t=>t.classList.remove('active')); if(state.todoPriorityFilter)tab.classList.add('active'); }
+    renderTodos();
+  });
+  document.getElementById('tagFilterBar').addEventListener('click',e=>{ const tag=e.target.closest('.tag-filter'); if(!tag) return; state.todoTagFilter=state.todoTagFilter===tag.dataset.tag?null:tag.dataset.tag; renderTagFilters(); renderTodos(); });
+  document.getElementById('todoList').addEventListener('click',e=>{ const item=e.target.closest('.todo-item'); if(!item) return; const id=item.dataset.id; const action=e.target.dataset.action; if(action==='toggle')toggleTodo(id); else if(action==='delete')deleteTodo(id); });
+  document.getElementById('noteAddBtn').addEventListener('click',addNote);
+  document.getElementById('noteInput').addEventListener('keydown',e=>{ if(e.key==='Enter')addNote(); });
+  document.getElementById('noteSearch').addEventListener('input',e=>{ state.noteSearch=e.target.value.trim(); renderNotes(); });
+  document.getElementById('colorPicker').addEventListener('click',e=>{ const dot=e.target.closest('.color-dot'); if(!dot) return; document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active')); dot.classList.add('active'); state.noteColor=dot.dataset.color; });
+  document.getElementById('notesGrid').addEventListener('click',e=>{ if(e.target.dataset.action==='delete-note'){ const card=e.target.closest('.note-card'); if(card)deleteNote(card.dataset.id); } });
+  document.getElementById('learnAddBtn').addEventListener('click',addLearn);
+  document.getElementById('learnInput').addEventListener('keydown',e=>{ if(e.key==='Enter')addLearn(); });
+  document.getElementById('learnList').addEventListener('click',e=>{ const item=e.target.closest('.learn-item'); if(!item) return; const id=item.dataset.id; const action=e.target.dataset.action; if(action==='learn-inc')adjustLearn(id,10); else if(action==='learn-dec')adjustLearn(id,-10); else if(action==='learn-del')deleteLearn(id); });
+  document.getElementById('learnList').addEventListener('blur',e=>{ if(e.target.classList.contains('learn-title')){ const item=e.target.closest('.learn-item'); const l=state.learns.find(x=>x.id===item.dataset.id); if(l){ l.title=e.target.textContent.trim()||'未命名'; e.target.textContent=l.title; saveState(); } } },true);
+  document.getElementById('learnList').addEventListener('keydown',e=>{ if(e.target.classList.contains('learn-title')&&e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
+  document.getElementById('linkAddBtn').addEventListener('click',addLink);
+  document.getElementById('linkUrl').addEventListener('keydown',e=>{ if(e.key==='Enter')addLink(); });
+  document.getElementById('linksGrid').addEventListener('click',e=>{ if(e.target.dataset.action==='delete-link'){ e.preventDefault(); e.stopPropagation(); const card=e.target.closest('.link-card'); if(card)deleteLink(card.dataset.id); } });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); } });
+}
+function init(){
+  loadState(); initTheme(); updateManifest(); initSampleData(); bindEvents(); renderAll();
+  if(state.city){ updateCityDisplay(state.city,false); }
+  else{ updateCityDisplay('',false); document.getElementById('cityName').textContent='点击定位'; }
+  loadWeather(); startWeatherAutoRefresh(); registerServiceWorker();
+  if(state.gistId&&state.gistToken){ updateSyncStatus('active','已配置'); }
+  if(state.coords&&!state.city){ reverseGeocode(state.coords.lat,state.coords.lon).then(city=>{ state.city=city; store.set(STORAGE_KEYS.city,city); updateCityDisplay(city,false); }); }
+}
+init();
+</script>
+</body>
+</html>
