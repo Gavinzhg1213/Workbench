@@ -395,20 +395,20 @@ body {
 </header>
 <div class="container">
   <section class="dashboard">
-    <div class="stat-card"><div class="stat-label">今日完成</div><div class="stat-value success" id="statToday">0</div></div>
-    <div class="stat-card"><div class="stat-label">进行中</div><div class="stat-value warning" id="statActive">0</div></div>
-    <div class="stat-card"><div class="stat-label">本周完成</div><div class="stat-value accent" id="statWeek">0</div></div>
-    <div class="stat-card"><div class="stat-label">笔记 & 学习</div><div class="stat-value info" id="statNotes">0</div></div>
+    <div class="stat-card"><div class="stat-label" data-i18n="dashboard.todayDone">今日完成</div><div class="stat-value success" id="statToday">0</div></div>
+    <div class="stat-card"><div class="stat-label" data-i18n="dashboard.inProgress">进行中</div><div class="stat-value warning" id="statActive">0</div></div>
+    <div class="stat-card"><div class="stat-label" data-i18n="dashboard.weekDone">本周完成</div><div class="stat-value accent" id="statWeek">0</div></div>
+    <div class="stat-card"><div class="stat-label" data-i18n="dashboard.notesLearn">笔记 & 学习</div><div class="stat-value info" id="statNotes">0</div></div>
   </section>
   <section class="trend-section">
-    <div class="section-title">📊 近 7 天完成趋势</div>
+    <div class="section-title" data-i18n="dashboard.trend">📊 近 7 天完成趋势</div>
     <div class="chart-container" id="chartContainer"></div>
   </section>
   <div class="main-grid">
-    <section class="panel">
+    <section class="panel" data-module="todos">
       <div class="section-title" data-i18n="module.todos">待办与日程</div>
       <div class="todo-input-row">
-        <input type="text" class="todo-input" id="todoInput" placeholder="输入待办事项，回车添加..." maxlength="200">
+        <input type="text" class="todo-input" id="todoInput" data-i18n-placeholder="todo.placeholder" placeholder="输入待办事项，回车添加..." maxlength="200">
         <input type="time" class="todo-time-input" id="todoTime" title="可选时间">
         <select class="todo-priority-select" id="todoPriority" title="优先级">
           <option value="medium">中优先级</option>
@@ -430,11 +430,11 @@ body {
       <div class="filter-bar" id="tagFilterBar" style="display:none;"></div>
       <ul class="todo-list" id="todoList"></ul>
     </section>
-    <section class="panel">
-      <div class="section-title">📝 笔记速记</div>
-      <div class="note-search-row"><input type="text" class="note-search" id="noteSearch" placeholder="🔍 搜索笔记..."></div>
+    <section class="panel" data-module="notes">
+      <div class="section-title" data-i18n="module.notes">📝 笔记速记</div>
+      <div class="note-search-row"><input type="text" class="note-search" id="noteSearch" data-i18n-placeholder="note.search" placeholder="🔍 搜索笔记..."></div>
       <div class="note-input-row">
-        <input type="text" class="todo-input" id="noteInput" placeholder="输入想法，回车生成便签..." maxlength="500">
+        <input type="text" class="todo-input" id="noteInput" data-i18n-placeholder="note.placeholder" placeholder="输入想法，回车生成便签..." maxlength="500">
         <div class="color-picker" id="colorPicker">
           <div class="color-dot active" data-color="yellow" style="background:var(--note-yellow)"></div>
           <div class="color-dot" data-color="green" style="background:var(--note-green)"></div>
@@ -447,8 +447,8 @@ body {
       </div>
       <div class="notes-grid" id="notesGrid"></div>
     </section>
-    <section class="panel">
-      <div class="section-title">📚 学习内容</div>
+    <section class="panel" data-module="learns">
+      <div class="section-title" data-i18n="module.learns">📚 学习内容</div>
       <div class="learn-input-row">
         <input type="text" class="todo-input" id="learnInput" placeholder="输入学习主题，回车添加..." maxlength="100">
         <button class="btn btn-primary" id="learnAddBtn">添加</button>
@@ -456,8 +456,8 @@ body {
       <div class="learn-list" id="learnList"></div>
       <div class="learn-avg" id="learnAvg"></div>
     </section>
-    <section class="panel">
-      <div class="section-title">🔗 快捷导航</div>
+    <section class="panel" data-module="links">
+      <div class="section-title" data-i18n="module.links">🔗 快捷导航</div>
       <div class="link-input-row">
         <input type="text" class="link-input" id="linkName" placeholder="网站名称" maxlength="30">
         <input type="text" class="link-input" id="linkUrl" placeholder="网址 (如 https://...)" maxlength="200">
@@ -465,8 +465,8 @@ body {
       </div>
       <div class="links-grid" id="linksGrid"></div>
     </section>
-    <section class="panel">
-      <div class="section-title">🍅 番茄钟</div>
+    <section class="panel" data-module="pomodoro">
+      <div class="section-title" data-i18n="module.pomodoro">🍅 番茄钟</div>
       <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
       <div class="pomodoro-controls">
         <button class="btn btn-primary" id="pomodoroStartBtn">▶ 开始</button>
@@ -488,8 +488,8 @@ body {
         <span>共 <strong id="pomodoroTodayMinutes">0</strong> 分钟</span>
       </div>
     </section>
-    <section class="panel">
-      <div class="section-title">✅ 习惯打卡</div>
+    <section class="panel" data-module="habits">
+      <div class="section-title" data-i18n="module.habits">✅ 习惯打卡</div>
       <div class="habit-input-row">
         <input type="text" class="todo-input" id="habitInput" placeholder="输入习惯名称，回车添加..." maxlength="30">
         <button class="btn btn-primary" id="habitAddBtn">添加</button>
@@ -778,6 +778,9 @@ function applyLanguage(){
     if(el.tagName==='INPUT'||el.tagName==='TEXTAREA'){ el.placeholder=t(key); }
     else if(el.tagName==='OPTION'){ el.textContent=t(key); }
     else { el.textContent=t(key); }
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    el.placeholder=t(el.dataset.i18nPlaceholder);
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title=t(el.dataset.i18nTitle); });
   document.documentElement.lang=currentLang==='zh'?'zh-CN':'en';
